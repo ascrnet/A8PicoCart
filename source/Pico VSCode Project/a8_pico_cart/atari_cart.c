@@ -25,13 +25,17 @@
  * - Adds Telelink II 8k car (CAR type 78)
  * - Adds Turbo 2000 8k cars (CAR type 253 exclusive emulation)
  * - Adds JNSoft 16k cars (CAR type 252 exclusive emulation)
- */
+ * - Adds Low Bank 8k cart (CAR type 53)
+ * - Adds Jacart 8k-128k cars (CAR types 104-108)
+ * - Adds JRC6 64k cart (CAR type 160)
+  */
 
 #include <string.h>
 #include <stdlib.h>
 
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
+#include "hardware/clocks.h"
 
 #include "ff.h"
 #include "fatfs_disk.h"
@@ -117,6 +121,13 @@ char errorBuf[40];
 #define CART_TYPE_BLIZZARD_4K		33	// 4k
 #define CART_TYPE_ADAWLIAH_32k		34	// 32K
 #define CART_TYPE_TELELINK2_8k		35	// 8k
+#define CART_TYPE_JRC6_64k			36	// 64k
+#define CART_TYPE_LOW_BANK_8K		37	// 8k
+#define CART_TYPE_JACART_8K			38	// 8K
+#define CART_TYPE_JACART_16K		39	// 16k
+#define CART_TYPE_JACART_32K		40	// 32K
+#define CART_TYPE_JACART_64K		41	// 64K
+#define CART_TYPE_JACART_128K		42	// 128K
 #define CART_TYPE_JNSOFT_16k		252	// 16K
 #define CART_TYPE_T2000_8K			253 // 8k
 #define CART_TYPE_ATR				254
@@ -475,11 +486,18 @@ int load_file(char *filename) {
 		else if (car_type == 50)	{ cart_type = CART_TYPE_TURBOSOFT_64K; expectedSize = 65536; }
 		else if (car_type == 51)	{ cart_type = CART_TYPE_TURBOSOFT_128K; expectedSize = 131072; }
 		else if (car_type == 52)	{ cart_type = CART_TYPE_MICROCALC; expectedSize = 32768; }
+		else if (car_type == 53)	{ cart_type = CART_TYPE_LOW_BANK_8K; expectedSize = 8192; }
 		else if (car_type == 54)	{ cart_type = CART_TYPE_SIC_128K; expectedSize = 131072; }
 		else if (car_type == 57)	{ cart_type = CART_TYPE_2K; expectedSize = 2048; }
 		else if (car_type == 58)	{ cart_type = CART_TYPE_4K; expectedSize = 4096; }
 		else if (car_type == 69)	{ cart_type = CART_TYPE_ADAWLIAH_32k; expectedSize = 32768; }
 		else if (car_type == 78)	{ cart_type = CART_TYPE_TELELINK2_8k; expectedSize = 8192; }
+		else if (car_type == 104)	{ cart_type = CART_TYPE_JACART_8K; expectedSize = 8192; }
+		else if (car_type == 105)	{ cart_type = CART_TYPE_JACART_16K; expectedSize = 16384; }
+		else if (car_type == 106)	{ cart_type = CART_TYPE_JACART_32K; expectedSize = 32768; }
+		else if (car_type == 107)	{ cart_type = CART_TYPE_JACART_64K;  expectedSize = 65536; }
+		else if (car_type == 108)	{ cart_type = CART_TYPE_JACART_128K; expectedSize = 131072; }
+		else if (car_type == 160) 	{ cart_type = CART_TYPE_JRC6_64k; expectedSize = 65536; }		
 		else if (car_type == 252)	{ cart_type = CART_TYPE_JNSOFT_16k; expectedSize = 16384; }
 		else if (car_type == 253)	{ cart_type = CART_TYPE_T2000_8K; expectedSize = 8192; }
 		else {
@@ -1492,7 +1510,7 @@ void __not_in_flash_func(emulate_adawliah_32k)() {
 	while (1)
 	{
         // select the right SRAM base, based on the cartridge bank
-		bankPtr = &cart_ram[0] + (8192*bank);
+		bankPtr = &cart_ram[0] + (32768*bank);
 		// wait for phi2 high
 		while (!((pins = gpio_get_all()) & PHI2_GPIO_MASK)) ;
 
@@ -1572,6 +1590,122 @@ void __not_in_flash_func(emulate_jnsoft_16k)() {
 		}
 		SET_DATA_MODE_IN;
 	}
+}
+
+void __not_in_flash_func(emulate_low_standard_8k)() {
+	// 8k
+	RD4_HIGH;
+	RD5_LOW;
+
+    uint32_t pins;
+    uint16_t addr;
+	while (1)
+	{      
+		// wait for s4 low
+        while ((pins = gpio_get_all()) & S4_GPIO_MASK) ;
+        SET_DATA_MODE_OUT;
+		// while s4 low
+		while(!((pins = gpio_get_all()) & S4_GPIO_MASK)) {
+			addr = pins & ADDR_GPIO_MASK;
+			gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[addr]) << 13);
+		}
+        SET_DATA_MODE_IN;
+	}
+}
+
+void __not_in_flash_func(emulate_jacart)(int size) {
+    RD4_LOW;
+    RD5_HIGH;
+
+    uint32_t pins;
+    uint16_t addr;
+	unsigned char *bankPtr;
+    uint8_t bank = 0;
+    bool rd5_high = true;  // 400/800 MMU
+
+	uint32_t bank_mask = 0x0;
+	if (size == 16) bank_mask = 0x1;
+	else if (size == 32) bank_mask = 0x3;
+	else if (size == 64) bank_mask = 0x7;
+	else if (size == 128) bank_mask = 0xF;
+
+    while (1) {
+        // select the right SRAM base, based on the cartridge bank
+        bankPtr = &cart_ram[0] + (8192 * bank);
+
+        // wait for phi2 high
+        while (!((pins = gpio_get_all()) & PHI2_GPIO_MASK));
+
+        if (!(pins & S5_GPIO_MASK) && rd5_high) {
+            // s5 low
+            SET_DATA_MODE_OUT;
+            addr = pins & ADDR_GPIO_MASK;
+            gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)(*(bankPtr + addr))) << 13);
+        } else if (!(pins & CCTL_GPIO_MASK)) {
+            // CCTL low
+            addr = pins & ADDR_GPIO_MASK;
+            bank = addr & bank_mask;
+            if (addr & 0x80) {
+                RD5_LOW;
+                rd5_high = false;
+            } else {
+                RD5_HIGH;
+                rd5_high = true;
+            }
+        }
+
+        // wait for phi2 low
+        while (gpio_get_all() & PHI2_GPIO_MASK);
+        SET_DATA_MODE_IN;
+    }
+}
+
+void __not_in_flash_func(emulate_jrc6_64k)() {
+    RD4_LOW;
+    RD5_HIGH;
+
+    uint32_t pins, last;
+    uint16_t addr;
+	unsigned char *bankPtr;
+    uint8_t data, bank_index, bank = 7;
+    bool rd5_high = true;  // 400/800 MMU
+
+    // Mapping of banks in interleaved order
+    const uint8_t bank_map[] = {7, 3, 5, 1, 6, 2, 4, 0};
+
+    while (1) {
+        // select the right SRAM base, based on the cartridge bank
+        bankPtr = &cart_ram[0] + (8192 * bank);
+
+        // wait for phi2 high
+        while (!((pins = gpio_get_all()) & PHI2_GPIO_MASK));
+
+        if (!(pins & S5_GPIO_MASK) && rd5_high) {
+            // s5 low
+            SET_DATA_MODE_OUT;
+            addr = pins & ADDR_GPIO_MASK;
+            gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)(*(bankPtr + addr))) << 13);
+        } else if (!(pins & CCTL_GPIO_MASK) && !(pins & RW_GPIO_MASK)) {
+            // CCTL low + RW low
+            last = pins;
+            while ((pins = gpio_get_all()) & PHI2_GPIO_MASK)
+                last = pins;
+            data = (last & DATA_GPIO_MASK) >> 13;
+            bank_index = (data >> 4) & 0x07;  // Extract bits D6-D4
+            bank = bank_map[bank_index];  
+            if (data & 0x80) {  // Bit D7: deactivate the cartridge
+                RD5_LOW;
+                rd5_high = false;
+            } else {
+                RD5_HIGH;
+                rd5_high = true;
+            }
+        }
+
+        // wait for phi2 low
+        while (gpio_get_all() & PHI2_GPIO_MASK);
+        SET_DATA_MODE_IN;
+    }
 }
 
 void __not_in_flash_func(feed_XEX_loader)(void) {
@@ -1656,6 +1790,13 @@ void emulate_cartridge(int cartType) {
 	else if (cartType == CART_TYPE_TELELINK2_8k) emulate_standard_16k();
 	else if (cartType == CART_TYPE_T2000_8K) emulate_t2000_8k();
 	else if (cartType == CART_TYPE_JNSOFT_16k) emulate_jnsoft_16k();
+	else if (cartType == CART_TYPE_LOW_BANK_8K) emulate_low_standard_8k();
+	else if (cartType == CART_TYPE_JACART_8K) emulate_jacart(8);
+    else if (cartType == CART_TYPE_JACART_16K) emulate_jacart(16);
+    else if (cartType == CART_TYPE_JACART_32K) emulate_jacart(32);
+    else if (cartType == CART_TYPE_JACART_64K) emulate_jacart(64);
+    else if (cartType == CART_TYPE_JACART_128K) emulate_jacart(128);
+	else if (cartType == CART_TYPE_JRC6_64k) emulate_jrc6_64k();
 	else if (cartType == CART_TYPE_XEX) feed_XEX_loader();
 	else
 	{	// no cartridge (cartType = 0)
