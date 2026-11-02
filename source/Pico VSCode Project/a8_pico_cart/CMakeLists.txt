@@ -37,6 +37,11 @@ target_compile_definitions(a8_pico_cart PRIVATE
 option(A8_ENABLE_TYPE42 "Enable 1/2/4 MiB flash cartridges (Winbond flash)" OFF)
 set(A8_TYPE42_FLASH_DIVIDER 2 CACHE STRING "Type42 flash divider (2 or 4)")
 if(A8_ENABLE_TYPE42)
+    # The copied SRAM probe has a fixed 1024-byte bound, qualified with 11.3.
+    # GCC 13.2 exceeds it. Refuse unqualified compilers before creating a UF2.
+    if(NOT CMAKE_C_COMPILER_VERSION MATCHES "^11\\.3\\.")
+        message(FATAL_ERROR "Winbond cartridge mode requires Arm GNU 11.3.Rel1; other compiler versions are not qualified for the fixed SRAM probe")
+    endif()
     target_compile_definitions(a8_pico_cart PRIVATE
         A8_ENABLE_TYPE42=1 PICO_STACK_SIZE=0x1000
         A8_TYPE42_FLASH_DIVIDER=${A8_TYPE42_FLASH_DIVIDER})

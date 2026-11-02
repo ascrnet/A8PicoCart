@@ -23,13 +23,18 @@ jobs:
       - name: Install build and test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-multilib gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib cmake ninja-build
+          sudo apt-get install -y gcc-multilib cmake ninja-build
+          TOOLCHAIN=arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi
+          curl -fL --retry 3 "https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/$TOOLCHAIN.tar.xz" -o "$RUNNER_TEMP/$TOOLCHAIN.tar.xz"
+          echo "d420d87f68615d9163b99bbb62fe69e85132dc0a8cd69fca04e813597fe06121  $RUNNER_TEMP/$TOOLCHAIN.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/$TOOLCHAIN.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/$TOOLCHAIN/bin" >> "$GITHUB_PATH"
           python -m pip install unicorn==2.1.4 pyelftools==0.32 capstone==5.0.6 py65==1.2.0
           git clone --depth 1 --branch 2.3.0 https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
           git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb
       - name: Build firmware and check actual loader
         run: |
-          cmake -S "$SRC" -B build -G Ninja -DPICO_SDK_PATH="$RUNNER_TEMP/pico-sdk" -DCMAKE_BUILD_TYPE=Release -DPICO_NO_PICOTOOL=1 -DA8_ENABLE_TYPE42=${{ matrix.type42 }}
+          cmake -S "$SRC" -B build -G Ninja -DPICO_TOOLCHAIN_PATH="$RUNNER_TEMP/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi" -DPICO_SDK_PATH="$RUNNER_TEMP/pico-sdk" -DCMAKE_BUILD_TYPE=Release -DPICO_NO_PICOTOOL=1 -DA8_ENABLE_TYPE42=${{ matrix.type42 }}
           cmake --build build --parallel 2
           python "$SRC/bin_to_uf2.py" build/a8_pico_cart.bin build/a8_pico_cart.uf2
           python "$SRC/tests/compiled_loader.py" build/a8_pico_cart.elf

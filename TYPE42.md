@@ -8,6 +8,9 @@ own Atari RAM requirements. Other flash chips are not qualified for this mode.
 
 Build with Pico SDK 2.3.0 and Arm GNU 11.3.Rel1:
 
+Enabled builds reject other compiler versions. GCC 13.2 produces a flash probe
+larger than the fixed 1,024-byte SRAM copy; the bound is not enlarged or waived.
+
 ```sh
 SRC="source/Pico VSCode Project/a8_pico_cart"
 cmake -S "$SRC" -B build -G Ninja -DPICO_SDK_PATH=/path/to/pico-sdk \
