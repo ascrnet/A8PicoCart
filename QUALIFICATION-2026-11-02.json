@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "result": "PASS_SOFTWARE_QUALIFICATION",
+  "date": "2026-11-02",
+  "toolchain": "Pico SDK 2.3.0; Arm GNU 11.3.Rel1",
+  "uf2": {
+    "name": "A8PicoCart-Winbond-1-2-4MiB-2026-11-02.uf2",
+    "bytes": 216576,
+    "sha256": "5909e054d6947d384c410a564c0e489fcbe9aa899c468560451663830100227b"
+  },
+  "firmwareBin": {
+    "bytes": 108184,
+    "sha256": "0bf30641d9ffae63d0a6f6483377e0703d8bf7a4b32e8bb3d157c082908dc36e"
+  },
+  "compiledLoaderCases": {
+    "True": 47,
+    "False": 31
+  },
+  "type61": {
+    "compiledBusCases": 6404,
+    "all128Banks": true,
+    "privateSq2Unchanged": true,
+    "hostImages": 4,
+    "hostByteComparisons": 8388608,
+    "hostRejections": 38,
+    "latencyBoundary": [
+      {
+        "extraCycles": 52,
+        "accepted": true
+      },
+      {
+        "extraCycles": 53,
+        "accepted": false
+      }
+    ]
+  },
+  "type63": {
+    "fixtures": [
+      4819
+    ],
+    "hostImages": 17,
+    "hostByteComparisons": 59506688,
+    "hostRejections": 53,
+    "fixedArenaBytes": 131072,
+    "readerBytes": 552,
+    "retainedReaderInstructionsAnd548OtherBytesExact": true,
+    "preflightCases": 24
+  },
+  "otherMappers": [
+    42,
+    75,
+    30,
+    109,
+    110,
+    112
+  ],
+  "rebuildBinAndUf2ByteExact": true,
+  "rebuildExecutableLoadSegmentsByteExact": true,
+  "physicalAcceptanceOfThisExactUf2": false,
+  "electricalTimingMeasured": false,
+  "fullGameAcceptance": false,
+  "hardwareReports": "Earlier 1 MiB: owner Winbond/800XL/U1MB. Later 4 MiB: owner-reported working. Type61/75 are new software-qualified additions.",
+  "source": "See UPSTREAM-SOURCE-IDENTITY.json and the matching Git commit. No commercial CAR is included."
+}

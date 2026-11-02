@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "canonicalRepository": "Mean-Hamster-Power-Engine",
+  "sourceRoot": "Platforms/Atari/A8Pico/a8picocart/source",
+  "scope": "Generic cartridge readers and their synthetic tests",
+  "files": [
+    {
+      "path": "type42_image.c",
+      "sourceSha256": "f0a3041c6a6e65cc3c8daf2cf56df67ac6cd4ad45d476b21101a2f57cbb5b184",
+      "publicSha256": "573f05fc3dc9993ff9f2035344ef7f174b0f658b22c52f019fe0f2506cab18fc"
+    },
+    {
+      "path": "type42_image.h",
+      "sourceSha256": "efd9971096cd7bfaa28ed79a956868e8b2bc79f25f6619794062748a6f30ecd3",
+      "publicSha256": "efd9971096cd7bfaa28ed79a956868e8b2bc79f25f6619794062748a6f30ecd3"
+    },
+    {
+      "path": "type42_bus.c",
+      "sourceSha256": "9e968f53ca182b55b24ae101ea9782c5cf4a55dd19302d9d4128a9f6dbf299cc",
+      "publicSha256": "f0c14dcca40cdc77de6b45f38c612ab8eb960a1609aa0bf68840d41d3c797039"
+    },
+    {
+      "path": "type42_loop.S",
+      "sourceSha256": "86d38bb1f950ca8b90bf1b44587ee5808e74400d94650ca96f59fb9c7f41d706",
+      "publicSha256": "86d38bb1f950ca8b90bf1b44587ee5808e74400d94650ca96f59fb9c7f41d706"
+    },
+    {
+      "path": "type63_image.c",
+      "sourceSha256": "23e5bd69b40fde720431b8532b08f469ab92478d605e76fc6944e385976c6755",
+      "publicSha256": "72a6b3558e65c17e44645b457264774a0ee3cd4905b41ffe466ef5667147a04c"
+    },
+    {
+      "path": "type63_image.h",
+      "sourceSha256": "667094e19f7b2fd6ae26226cdb3be96aed3918e4a561ea7f64935a55639e5641",
+      "publicSha256": "667094e19f7b2fd6ae26226cdb3be96aed3918e4a561ea7f64935a55639e5641"
+    },
+    {
+      "path": "type63_loop.S",
+      "sourceSha256": "190563ed317a2d25f97ecd93c1182e242658a16412a6fe72214f0edf13581c9c",
+      "publicSha256": "190563ed317a2d25f97ecd93c1182e242658a16412a6fe72214f0edf13581c9c"
+    },
+    {
+      "path": "type61_loop.S",
+      "sourceSha256": "ca00040ef9c002b845ed4d9b09c90159b564b8c7ea2ad1b9781272e8cdf0a6c2",
+      "publicSha256": "ca00040ef9c002b845ed4d9b09c90159b564b8c7ea2ad1b9781272e8cdf0a6c2"
+    },
+    {
+      "path": "tests/compiled_bus.py",
+      "sourceSha256": "21a28fc8a47d9e70845af70c89815b01a296c67669ebc76fd374f7ad0d6fbe23",
+      "publicSha256": "2e6be15dec9adad34835711858ab2d6edc8128faa5827c39f8042cdd52503acb"
+    },
+    {
+      "path": "tests/compiled_loader.py",
+      "sourceSha256": "f54f27a96b4d9892f7f639fb3fa452cefc46135278d6645d5eafc7e9a71a07fe",
+      "publicSha256": "a1c22a3588debe010c22ff35d4bc2a354589f678b41ba6ce3cf48cdc26922227"
+    },
+    {
+      "path": "tests/megacart_bus.py",
+      "sourceSha256": "c4e755b2e0542775a950dfcd34cba0b1df3cbf36aa05bceb6f3482620d395b17",
+      "publicSha256": "c4e755b2e0542775a950dfcd34cba0b1df3cbf36aa05bceb6f3482620d395b17"
+    },
+    {
+      "path": "tests/host_type42.c",
+      "sourceSha256": "74c671735c034728c1035c114c5c9128f91b03f9d621915bf0c10382e578bf63",
+      "publicSha256": "9300f74e82d8eaebbef369aa2d3040c05c6bc8da2391ae2d2c54780aa7345cfc"
+    },
+    {
+      "path": "tests/host_type63.c",
+      "sourceSha256": "b6f090f23e5ef255b86e40378e8485a280e461ed7f40efc41f682c5829b4ab07",
+      "publicSha256": "b6f090f23e5ef255b86e40378e8485a280e461ed7f40efc41f682c5829b4ab07"
+    },
+    {
+      "path": "tests/type63_bus.py",
+      "sourceSha256": "5735cbef15e93938ead287e7175bef9056d747457f8dd99257cd6cd02ccdf2a9",
+      "publicSha256": "5735cbef15e93938ead287e7175bef9056d747457f8dd99257cd6cd02ccdf2a9"
+    },
+    {
+      "path": "tests/type63_preflight.py",
+      "sourceSha256": "6ca053b7be6bc5bfc9a04fcd9c8da3a11c2c01ce152c0ab4a0d52fa1aac338d4",
+      "publicSha256": "6ca053b7be6bc5bfc9a04fcd9c8da3a11c2c01ce152c0ab4a0d52fa1aac338d4"
+    },
+    {
+      "path": "tests/host_type61.c",
+      "sourceSha256": "536eda1d4c36afd44a5a5c585d94adb5edea23595fcbc48d17c3a784310cbf42",
+      "publicSha256": "536eda1d4c36afd44a5a5c585d94adb5edea23595fcbc48d17c3a784310cbf42"
+    },
+    {
+      "path": "tests/type61_bus.py",
+      "sourceSha256": "87ca974bc054b0449196fb6a784fcbf3c615429ee229368d09fda3e140bc8b24",
+      "publicSha256": "87ca974bc054b0449196fb6a784fcbf3c615429ee229368d09fda3e140bc8b24"
+    }
+  ]
+}

@@ -38,6 +38,7 @@
 #include "hardware/clocks.h"
 #ifdef A8_ENABLE_TYPE42
 #include "type42_image.h"
+#include "type63_image.h"
 #endif
 
 #include "ff.h"
@@ -460,14 +461,26 @@ int load_file(char *filename) {
 		}
 #ifdef A8_ENABLE_TYPE42
 		if (carFileHeader[4] == 0 && carFileHeader[5] == 0 &&
-			carFileHeader[6] == 0 && carFileHeader[7] == 42) {
-			cart_type = type42_load_image(&fil, cart_ram, errorBuf)
+			carFileHeader[6] == 0 && (carFileHeader[7] == 30 || carFileHeader[7] == 42 ||
+			carFileHeader[7] == 109 || carFileHeader[7] == 110 ||
+			carFileHeader[7] == 112 || carFileHeader[7] == 63 ||
+			carFileHeader[7] == 61 || carFileHeader[7] == 75)) {
+			bool image_ok = carFileHeader[7] == 63
+				? type63_load_image(&fil, cart_ram, errorBuf) : carFileHeader[7] == 61
+				? type61_load_image(&fil, cart_ram, errorBuf) : carFileHeader[7] == 42
+				? type42_load_image(&fil, cart_ram, errorBuf)
+				: type42_load_standard_image(&fil, cart_ram, errorBuf, carFileHeader[7]);
+			cart_type = image_ok
 				? CART_TYPE_ATARIMAX_8MBIT : CART_TYPE_NONE;
 			if (cart_type && !type42_verify_fast_flash()) {
-				strcpy(errorBuf, "Type42 fast flash verify failed");
+				strcpy(errorBuf, carFileHeader[7] == 63 ? "Type63 fast flash verify failed" :
+					"Type42 fast flash verify failed");
 				cart_type = CART_TYPE_NONE;
 			}
-			if (cart_type) type42_prepare_bus();
+			/* Native CAR42 retains allocating XIP pointers after the unchanged
+			 * uncached SSI2 preflight. Other native mappers and A8M1 keep the
+			 * nonallocating alias; cache size, clocks and guards are unchanged. */
+			if (cart_type && carFileHeader[7] != 42 && carFileHeader[7] != 75) type42_prepare_bus();
 			goto closefile;
 		}
 #endif

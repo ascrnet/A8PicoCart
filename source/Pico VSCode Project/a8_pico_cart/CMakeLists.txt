@@ -34,14 +34,14 @@ target_compile_definitions(a8_pico_cart PRIVATE
 
 # Large ROMs use flash directly at an experimental Winbond-only speed.
 # Keep the existing SRAM-only firmware as the default for other flash chips.
-option(A8_ENABLE_TYPE42 "Enable experimental 1 MiB Atarimax support (Winbond flash)" OFF)
+option(A8_ENABLE_TYPE42 "Enable 1/2/4 MiB flash cartridges (Winbond flash)" OFF)
 set(A8_TYPE42_FLASH_DIVIDER 2 CACHE STRING "Type42 flash divider (2 or 4)")
 if(A8_ENABLE_TYPE42)
     target_compile_definitions(a8_pico_cart PRIVATE
         A8_ENABLE_TYPE42=1 PICO_STACK_SIZE=0x1000
         A8_TYPE42_FLASH_DIVIDER=${A8_TYPE42_FLASH_DIVIDER})
     target_sources(a8_pico_cart PRIVATE
-        type42_image.c type42_bus.c type42_loop.S)
+        type42_image.c type42_bus.c type42_loop.S type63_image.c type63_loop.S type61_loop.S)
 endif()
 
 #pico_set_linker_script(a8_pico_cart ${CMAKE_CURRENT_SOURCE_DIR}/memmap_custom.ld)

@@ -16,7 +16,18 @@
 extern const uint8_t *type42_pages[TYPE42_FILE_PAGES];
 extern const uint8_t *type42_bank_base[128];
 extern uint32_t type42_payload_checksum;
+/* Shared flash reader configuration. Type42/MPE retain their original limits;
+ * standard J(atari)Cart 109/110 use 32/64 banks and start in bank zero.
+ * MegaCart 30 uses 32 halves paired into sixteen 16 KiB banks. */
+extern uint32_t type42_file_pages;
+extern uint32_t type42_bank_count;
+extern uint32_t type42_initial_bank;
+extern uint32_t type42_bank_mask;
+/* Selects separate MegaCart/DCart bus handlers only after a checked load. */
+extern uint32_t type42_mapper_type;
 bool type42_load_image(FIL *file, uint8_t *cache_128k, char error[40]);
+bool type42_load_standard_image(FIL *file, uint8_t *cache_128k,
+                                char error[40], unsigned cart_type);
 bool type42_verify_fast_flash(void);
 void type42_prepare_bus(void);
 void emulate_type42(void);

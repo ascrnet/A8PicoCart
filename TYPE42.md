@@ -1,90 +1,82 @@
-# 1 MiB Atarimax (CAR type 42)
+# Winbond 1, 2 and 4 MiB cartridges
 
-The optional Type 42 handler loads standard, unchanged 1 MiB Atarimax `.car`
-files. Enable it for a purple RP2040 A8PicoCart with **Winbond flash**:
+This opt-in contribution updates the earlier Type42 PR with the maintained
+native cartridge readers and adds MegaMax 2 MiB support. It targets the original
+A8PicoCart PCB with a 16 MiB Winbond RP2040 module. The mapper needs no extra
+Atari RAM, wiring, Duo board or accelerator. Individual games may have their
+own Atari RAM requirements. Other flash chips are not qualified for this mode.
 
-```sh
-cmake -S "source/Pico VSCode Project/a8_pico_cart" -B build -G Ninja \
-  -DPICO_SDK_PATH=/path/to/pico-sdk -DCMAKE_BUILD_TYPE=Release \
-  -DA8_ENABLE_TYPE42=ON
-cmake --build build
-```
-
-Use Pico SDK 2.3.0 and an Arm GNU toolchain. The SDK's normal UF2 generation
-remains unchanged. If building without picotool, add `-DPICO_NO_PICOTOOL=1`
-and convert the resulting binary with:
+Build with Pico SDK 2.3.0 and Arm GNU 11.3.Rel1:
 
 ```sh
-python "source/Pico VSCode Project/a8_pico_cart/bin_to_uf2.py" \
-  build/a8_pico_cart.bin build/a8_pico_cart.uf2
-```
-
-`A8_ENABLE_TYPE42` defaults to OFF to preserve the existing SRAM-only build
-for other flash chips. The feature uses the existing 250 MHz system clock
-and a Type42-only flash divider of 2 (125 MHz QSPI). The menu, USB mode,
-other cartridge types, and filesystem layout keep their existing settings.
-`A8_TYPE42_FLASH_DIVIDER=4` is available for development comparisons.
-
-## Behavior
-
-- Requires `CART`, full big-endian type 42, exactly 1 MiB plus the 16-byte
-  header, and a matching additive payload checksum.
-- Maps the original FatFs sectors to flash addresses, supporting fragmented
-  files. No payload patches, extra flash copies, or filesystem writes.
-- Reuses the existing 128 KiB SRAM buffer for the first file sector and
-  final 255 sectors, including initial bank 127 and high code banks.
-- The remaining ROM is read through uncached, non-allocating XIP pointers.
-- Begins at bank 127. Reads or writes at `$D500-$D57F` select banks 0-127;
-  `$D580-$D5FF` disables the cartridge window. Bank selection uses the
-  address, not the written value.
-- Before launch, checks the payload again through uncached flash at the
-  selected speed, then restores the menu divider. A mismatch rejects launch.
-- The bus loop runs from SRAM and checks address/select/read-write before
-  fetching data and again before driving it. No Atari wait states are added.
-- Uses internal mapper ID 43; this is distinct from CAR header type 42 and
-  preserves the existing internal IDs for Dawliah and Jacart cartridges.
-- Type 61 / 2 MiB cartridges are outside this change.
-
-## Testing
-
-I tested the preceding v0.4 implementation on my Winbond A8PicoCart and
-Atari 800XL with Ultimate 1MB. My unchanged 1 MiB AGI-ANTIC games load
-and run. I also use the same Type42 handler in my shared MPE firmware;
-existing cartridges continue to work alongside the native games.
-
-The [current Type42 Winbond UF2](https://github.com/ziggystar12/A8PicoCart/releases/tag/type42-winbond-2026-09-30)
-is built entirely from this public branch with Pico SDK 2.3.0. Its linked
-loader passes 19 cases and its bus passes 5,140 modeled cases. The download
-includes matching source. These are software checks of this exact build;
-the hardware experience above identifies the handler and my setup.
-
-This upstream contribution remains the unchanged 1 MiB CAR handler.
-The MPE game compiler, native game runtime, PrismA8 conversion and optional
-HamsterOS are maintained separately. Game-specific picture profiles and
-the Atari display client travel in compiled `.mpe` packages. No commercial
-games or proprietary graphics sources are included in this contribution.
-
-Software tests use only synthetic data unless local game files are explicitly
-passed to the loader test. No commercial game data is included.
-
-```sh
-python -m pip install unicorn==2.1.4 pyelftools==0.32 py65==1.2.0
 SRC="source/Pico VSCode Project/a8_pico_cart"
-python "$SRC/tests/compiled_loader.py" build/a8_pico_cart.elf
-python "$SRC/tests/compiled_bus.py" build/a8_pico_cart.elf
-python "$SRC/tests/make_diagnostic.py" build/diagnostics standard
-cc -I"$SRC" -I"$SRC/fatfs" "$SRC/tests/host_type42.c" \
-  "$SRC/type42_image.c" "$SRC/fatfs/ff.c" "$SRC/fatfs/ffunicode.c" \
-  -o build/host-type42
-build/host-type42 build/diagnostics/TYPE42-BANK-TEST-V2.car
+cmake -S "$SRC" -B build -G Ninja -DPICO_SDK_PATH=/path/to/pico-sdk \
+  -DCMAKE_BUILD_TYPE=Release -DPICO_NO_PICOTOOL=1 -DA8_ENABLE_TYPE42=ON
+cmake --build build
+python "$SRC/bin_to_uf2.py" build/a8_pico_cart.bin build/a8_pico_cart.uf2
 ```
 
-`compiled_loader.py` checks the actual ARM menu loader with mocked file IO,
-including existing mapper routing and enabled/disabled feature builds.
-`host_type42.c` tests the production image parser with real FatFs and a
-fragmented simulated disk. `compiled_bus.py` executes the actual ARM bus
-handler and preflight with mocked GPIO/SSI. It does not model electrical
-timing. The diagnostic generator also accepts `ram` and `nodma` variants.
+`A8_ENABLE_TYPE42=ON` enables all the readers below. The existing option name
+is retained; no MPE or Duo flag is needed. OFF retains the SRAM-only upstream
+build. The enabled firmware retains upstream's 250 MHz system clock and uses
+divider 2 during cartridge service. Menu/USB use their existing settings.
 
-Always remove the cartridge from the Atari before connecting USB, and
-disconnect USB before installing it in the Atari.
+| CAR type | ROM size | Startup and bank control |
+| --- | --- | --- |
+| 42, old Atarimax | 1 MiB | Bank 127; reads or writes at D500-D57F select by address; D580-D5FF disables RD5. |
+| 75, new Atarimax | 1 MiB | Same address-based banking, starting at bank 0. All banks 0-127 remain accessible. |
+| 61, MegaMax | 2 MiB | Bank 0; 16 KiB at 8000-BFFF. Reads or writes in D5xx select address bits 0-6; bit 7 disables RD4/RD5. Written data is ignored. |
+| 63, Flash MegaCart | 4 MiB | Bank FE; 16 KiB at 8000-BFFF. Writes to D500-D51F latch the data byte; FF disables RD4/RD5. Reads return the bank latch. |
+
+The maintained 256 KiB MegaCart, 256/512 KiB J(atari)Cart and 512 KiB DCart
+readers are retained too. Type 64 has a different, data-based 2 MiB protocol
+and is not routed to Type61. Flash programming is not implemented.
+
+Formats follow [Atari800's cartridge specification](https://github.com/atari800/atari800/blob/master/DOC/cart.txt).
+The parser checks the full big-endian type, exact length and additive checksum,
+then maps the original FatFs sectors, including fragmented files and CAR's
+16-byte header seam. It does not patch game data or write the filesystem.
+
+The 1 MiB reader retains the newer native head/tail cache and contiguous raw
+bank detection. It keeps allocating XIP pointers after its uncached integrity
+check. This differs from the older PR's uncached-only native bus path.
+
+The 2/4 MiB paths share immutable half-window maps and the established direct
+SSI ROM reader, while keeping their different D5 protocols separate. The arena
+stays 128 KiB. Type61 caches its first four banks; Type63 retains its established
+first-four/FE policy and optional checked cache hint. Before launch, an SRAM
+probe checks every payload byte with SUM/FNV, physical cache seams, SSI mode and
+bounded modeled flash latency. Failures return an error to the normal menu.
+The steady SRAM loop is installed before launch; no file IO or demand loads
+occur while the Atari is reading ROM.
+
+## Testing and hardware status
+
+I have tested the earlier 1 MiB implementation on my Winbond A8PicoCart and
+800XL with Ultimate 1MB. I also report working 4 MiB cartridges in the later
+maintained firmware. Those reports describe my hardware and those builds;
+they do not establish this standalone UF2 on every stock 800XL.
+
+Type61 is newly implemented in this update. My existing Space Quest II CAR is
+2,097,168 bytes, type61. The unchanged private image is used locally for parser,
+fragmentation, all-bank ARM bus and preflight checks. It is not distributed.
+Type61 and Type75 still need physical acceptance of this exact standalone UF2.
+Software tests do not measure electrical Atari/RP2040/flash timing or prove a
+complete game. The stock 800XL freeze reported against the older PR needs a
+retry with the exact new UF2 and an identified Winbond module.
+
+Software checks require `unicorn==2.1.4`, `pyelftools==0.32` and `capstone==5.0.6`.
+The real-FatFs 2/4 MiB host fixtures require an actual 32-bit compiler ABI
+(`cc -m32` with multilib on Linux), so their pointer table uses the RP2040's
+fixed layout. CI builds feature ON/OFF and runs the linked loader, mapper,
+fragmentation and preflight tests using synthetic images only.
+
+The public contribution contains generic cartridge code and synthetic tests.
+MPE engines, commercial game data, private graphics, the accelerator framework
+and Duo's pooled filesystem are separate from this PR.
+
+Remove the cartridge from the Atari before connecting PC USB. Hold BOOTSEL,
+connect USB and install the matching UF2 on RPI-RP2. After normal storage
+returns, eject and disconnect USB before fitting the cartridge in the Atari.
+The firmware remains below the existing filesystem at flash offset 1 MiB.
+No eraser or factory image is needed for this application update.
