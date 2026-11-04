@@ -23,6 +23,7 @@
     "cmake.configureOnOpen": false,
     "cmake.generator": "Ninja",
     "cmake.cmakePath": "${userHome}/.pico-sdk/cmake/v4.3.4/bin/cmake",
+    "cmake.configureSettings": { "A8_ENABLE_TYPE42": "ON"},
     "C_Cpp.debugShortcut": false,
     "terminal.integrated.env.windows": {
         "PICO_SDK_PATH": "${env:USERPROFILE}/.pico-sdk/sdk/2.3.0",
