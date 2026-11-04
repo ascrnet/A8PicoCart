@@ -119,7 +119,7 @@ text_out_y	= $94	// word
 text_out_ptr	= $96	// word
 text_out_len	= $98
 cur_chunk	= $99
-joy2b		= $100
+joy2b		= $9a
 
 ; XEX loader stuff from Jon Halliday/FJC
 LoaderAddress	equ $700
