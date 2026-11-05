@@ -18,7 +18,9 @@ Support for new cartridges:
  - 160 JRC6 64kb cartridge utilities PLOTTER CART. 
 
 Update PicoSDK 2.3.0
+
 Altirraos updated to 3.10
+
 ATR density detection has been improved to detect the four most important types: SD, ED, D, and DS. 
 
 ## 09/29/2024
@@ -32,10 +34,18 @@ Support for new cartridges:
  - JNSoft 16k
  
 TKII support
+
 JOY2B support 
+
 Fix loader XEX
+
 Turn the page using the > and < keys
+
 Key / to search
+
 Key remapping: Joy left/Joy2b button 2/Esc=Back B=Boot F=Find
+
 Quick menu change — just add A8PicoCart.rom to the root directory
+
 Improved subdirectory navigation
+
