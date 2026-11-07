@@ -1,5 +1,7 @@
 # FW History
 
+This version includes the improvements suggested by users on the Atarige forum. ​
+
 ## 11/03/2026
 
 Support for new cartridges:
