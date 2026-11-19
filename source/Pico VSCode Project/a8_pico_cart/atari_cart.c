@@ -723,19 +723,25 @@ void __not_in_flash_func(emulate_standard_16k)() {
 	{
 		// wait for either s4 or s5 low
 		while (((pins = gpio_get_all()) & S4_S5_GPIO_MASK) == S4_S5_GPIO_MASK) ;
-		SET_DATA_MODE_OUT;
+
 		if (!(pins & S4_GPIO_MASK)) {
 			// while s4 low
 			while(!((pins = gpio_get_all()) & S4_GPIO_MASK)) {
-				addr = pins & ADDR_GPIO_MASK;
-				gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[addr]) << 13);
+				if (pins & RW_GPIO_MASK) {
+					SET_DATA_MODE_OUT;
+					addr = pins & ADDR_GPIO_MASK;
+					gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[addr]) << 13);
+				}
 			}
 		}
 		else {
 			// while s5 low
 			while(!((pins = gpio_get_all()) & S5_GPIO_MASK)) {
-				addr = pins & ADDR_GPIO_MASK;
-				gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[0x2000|addr]) << 13);
+				if (pins & RW_GPIO_MASK) {
+					SET_DATA_MODE_OUT;
+					addr = pins & ADDR_GPIO_MASK;
+					gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[0x2000|addr]) << 13);
+				}
 			}
 		}
 		SET_DATA_MODE_IN;
