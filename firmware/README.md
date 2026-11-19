@@ -7,6 +7,8 @@ This version includes the improvements suggested by users on the Atarige [forum]
 
 Coming soon....
 
+Do not use the bus all the time; use it only when necessary for 8 kb standard. (@ivop)
+
 ## 11/03/2026
 
 Support for new cartridges: (@ziggystar)
