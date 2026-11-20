@@ -7,6 +7,8 @@ This version includes the improvements suggested by users on the Atarige [forum]
 
 Coming soon....
 
+Repair Adawliah 32k Cartridge (@ascrnet)
+
 The routine for Czech JRC 64K cartridges was improved to support both the linear (type 80) and interlaced (type 160) versions. (@ascrnet)
 
 Do not use the bus all the time; use it only when necessary for 8kb and 16kb standard. (@ivop)

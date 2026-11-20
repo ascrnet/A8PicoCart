@@ -1541,28 +1541,27 @@ void __not_in_flash_func(emulate_adawliah_32k)() {
 	RD4_LOW;
 	RD5_HIGH;
 
-    uint32_t bank = 0;
-    unsigned char *bankPtr;
     uint32_t pins;
     uint16_t addr;
-	bool rd5_high = true;	// 400/800 MMU
+    uint32_t bank = 0;
+    bool rd5_high = true;    // 400/800 MMU
 
-	while (1)
-	{
-        // select the right SRAM base, based on the cartridge bank
-		bankPtr = &cart_ram[0] + (32768*bank);
-		// wait for phi2 high
-		while (!((pins = gpio_get_all()) & PHI2_GPIO_MASK)) ;
+    while (1)
+    {
+        // wait for phi2 high
+        while (!((pins = gpio_get_all()) & PHI2_GPIO_MASK)) ;
 
         if (!(pins & S5_GPIO_MASK) && rd5_high)
         {   // s5 low
-            SET_DATA_MODE_OUT;
-            addr = pins & ADDR_GPIO_MASK;
-            gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)(*(bankPtr + addr))) << 13);
+			if (pins & RW_GPIO_MASK) {
+            	SET_DATA_MODE_OUT;
+            	addr = pins & ADDR_GPIO_MASK;
+            	gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[(bank * 8192) | addr]) << 13);
+			}
         }
         else if (!(pins & CCTL_GPIO_MASK))
         {   // CCTL low
-			bank = (bank + 1) & 3;
+            bank = (bank + 1) & 0x03;
 			if (bank == 4)	// disable
 				{ RD5_LOW; rd5_high = false; }
 			else
@@ -1571,7 +1570,7 @@ void __not_in_flash_func(emulate_adawliah_32k)() {
         // wait for phi2 low
         while (gpio_get_all() & PHI2_GPIO_MASK) ;
         SET_DATA_MODE_IN;
-	}
+    }
 }
 
 int64_t off_rd5_cart(alarm_id_t id, void *user_data) {
