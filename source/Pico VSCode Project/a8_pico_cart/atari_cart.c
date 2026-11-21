@@ -134,8 +134,8 @@ char errorBuf[40];
 #define CART_TYPE_JACART_128K		42	// 128K
 #define CART_TYPE_ATARIMAX_8MBIT  	43  // 1 MiB; internal ID, CAR header type is 42
 #define CART_TYPE_JRC6_64K_LINEAR	44	// 64K
-#define CART_TYPE_JNSOFT_16k		252	// 16K
-#define CART_TYPE_T2000_8K			253 // 8k
+#define CART_TYPE_JNSOFT_16k		251	// 16K
+#define CART_TYPE_T2000_8K			252 // 8k
 #define CART_TYPE_ATR				254
 #define CART_TYPE_XEX				255
 
