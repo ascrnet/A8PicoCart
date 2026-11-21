@@ -3,9 +3,9 @@
 This version includes the improvements suggested by users on the Atarige [forum](https://forums.atariage.com/topic/351546-a8picocart-unocart-on-a-raspberry-pi-pico/). ​
 
 
-## 11/xx/2026
+## 11/21/2026
 
-Coming soon....
+Support has been added for running BASIC files as if they were binaries. (@ascrnet)
 
 Error messages do not take you back to the first page. (@ascrnet)
 

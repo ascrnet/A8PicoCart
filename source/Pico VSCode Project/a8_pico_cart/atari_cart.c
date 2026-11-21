@@ -68,6 +68,10 @@
 
 #include "rom.h"
 #include "osrom.h"
+#include "bas_run.h"
+
+#define BAS_LOAD_ADDR		0x3880
+#define BAS_RUN_ADDR		0x0600
 
 unsigned char cart_ram[128*1024];
 unsigned char cart_d5xx[256] = {0};
@@ -136,6 +140,7 @@ char errorBuf[40];
 #define CART_TYPE_JRC6_64K_LINEAR	44	// 64K
 #define CART_TYPE_JNSOFT_16k		251	// 16K
 #define CART_TYPE_T2000_8K			252 // 8k
+#define CART_TYPE_BAS				253
 #define CART_TYPE_ATR				254
 #define CART_TYPE_XEX				255
 
@@ -166,7 +171,8 @@ char *get_filename_ext(char *filename) {
 int is_valid_file(char *filename) {
 	char *ext = get_filename_ext(filename);
 	if (strcasecmp(ext, "CAR") == 0 || strcasecmp(ext, "ROM") == 0
-			|| strcasecmp(ext, "XEX") == 0 || strcasecmp(ext, "ATR") == 0)
+			|| strcasecmp(ext, "XEX") == 0 || strcasecmp(ext, "ATR") == 0
+			|| strcasecmp(ext, "BAS") == 0)
 		return 1;
 	return 0;
 }
@@ -428,6 +434,73 @@ int write_atr_sector(uint16_t sector, uint8_t page, uint8_t *buf) {
 	if (f_lseek(&mountedATR->fil, offset) != FR_OK || f_write(&mountedATR->fil, buf, 128, &bw) != FR_OK || f_sync(&mountedATR->fil) != FR_OK  || bw != 128)
 		return 2;
 	return 0;
+}
+
+/* BAS FILE HANDLING */
+int load_bas(char *filename) {
+    FATFS FatFs;
+    FIL fil;
+    UINT br;
+
+    if (f_mount(&FatFs, "", 1) != FR_OK) {
+        strcpy(errorBuf, "Can't read flash memory");
+        return 0;
+    }
+    if (f_open(&fil, filename, FA_READ) != FR_OK) {
+        strcpy(errorBuf, "Can't open file");
+        f_mount(0, "", 1);
+        return 0;
+    }
+
+    FSIZE_t basSize = f_size(&fil);
+    const int overhead = 10 + sizeof(bas_loader) + 12;
+    const int MAX_BAS = 22000 - overhead;
+    if (basSize == 0 || basSize > (FSIZE_t)MAX_BAS) {
+        strcpy(errorBuf, "BAS too big");
+        goto fail;
+    }
+
+    unsigned char *p = &cart_ram[4];
+    unsigned char *xexBase = p;
+
+    // $600 Block
+    unsigned int loaderEnd = BAS_RUN_ADDR + sizeof(bas_loader) - 1;
+    *p++ = 0xFF; *p++ = 0xFF;
+    *p++ = BAS_RUN_ADDR & 0xFF; *p++ = (BAS_RUN_ADDR >> 8) & 0xFF;
+    *p++ = loaderEnd  & 0xFF; *p++ = (loaderEnd >> 8) & 0xFF;
+    memcpy(p, bas_loader, sizeof(bas_loader));
+    p += sizeof(bas_loader);
+
+    // $3880 Block
+    unsigned int basEnd = BAS_LOAD_ADDR + (unsigned int)basSize - 1;
+    *p++ = BAS_LOAD_ADDR & 0xFF; *p++ = (BAS_LOAD_ADDR >> 8) & 0xFF;
+    *p++ = basEnd & 0xFF; *p++ = (basEnd >> 8) & 0xFF;
+    if (f_read(&fil, p, (UINT)basSize, &br) != FR_OK || br != (UINT)basSize) {
+        strcpy(errorBuf, "Can't read BAS");
+        goto fail;
+    }
+    p += basSize;
+
+    // RUNAD $600
+    *p++ = 0xE0; *p++ = 0x02;
+    *p++ = 0xE1; *p++ = 0x02;
+    *p++ = BAS_RUN_ADDR & 0xFF;
+    *p++ = (BAS_RUN_ADDR >> 8) & 0xFF;
+
+    unsigned int xexLen = (unsigned int)(p - xexBase);
+    cart_ram[0] = xexLen & 0xFF;
+    cart_ram[1] = (xexLen >> 8) & 0xFF;
+    cart_ram[2] = (xexLen >> 16) & 0xFF;
+    cart_ram[3] = 0;
+
+    f_close(&fil);
+    f_mount(0, "", 1);
+    return 1;
+
+fail:
+    f_close(&fil);
+    f_mount(0, "", 1);
+    return 0;
 }
 
 /* CARTRIDGE/XEX HANDLING */
@@ -1861,7 +1934,7 @@ void emulate_cartridge(int cartType) {
     else if (cartType == CART_TYPE_JACART_128K) emulate_jacart(128);
 	else if (cartType == CART_TYPE_JRC6_64K_LINEAR) emulate_jrc6_64k(0);
 	else if (cartType == CART_TYPE_JRC6_64K_INTER) emulate_jrc6_64k(1);
-	else if (cartType == CART_TYPE_XEX) feed_XEX_loader();
+	else if (cartType == CART_TYPE_XEX || cartType == CART_TYPE_BAS) feed_XEX_loader();
 	else
 	{	// no cartridge (cartType = 0)
 		RD4_LOW;
@@ -1916,6 +1989,16 @@ void __not_in_flash_func(atari_cart_main)()
 				{	// ATR
 					cart_d5xx[0x01] = 3;	// ATR
 					cartType = CART_TYPE_ATR;
+				}
+				else if (strcasecmp(get_filename_ext(entry[n].filename), "BAS")==0)
+				{
+					if (load_bas(path)) {
+						cartType = CART_TYPE_BAS;
+						cart_d5xx[0x01] = 2;
+					} else {
+						cart_d5xx[0x01] = 4;
+						strcpy((char*)&cart_d5xx[0x02], errorBuf);
+					}
 				}
 				else
 				{	// ROM,CAR or XEX
