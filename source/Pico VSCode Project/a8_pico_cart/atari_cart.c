@@ -1596,9 +1596,11 @@ void __not_in_flash_func(emulate_phoenix_8k)() {
 
         if (!(pins & S5_GPIO_MASK) && rd5_high)
         {   // s5 low
-            SET_DATA_MODE_OUT;
-            addr = pins & ADDR_GPIO_MASK;
-            gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[addr]) << 13);
+			if (pins & RW_GPIO_MASK) {
+            	SET_DATA_MODE_OUT;
+            	addr = pins & ADDR_GPIO_MASK;
+            	gpio_put_masked(DATA_GPIO_MASK, ((uint32_t)cart_ram[addr]) << 13);
+			}
         }
         else if (!(pins & CCTL_GPIO_MASK))
         {   // CCTL low
