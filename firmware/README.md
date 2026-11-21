@@ -3,9 +3,11 @@
 This version includes the improvements suggested by users on the Atarige [forum](https://forums.atariage.com/topic/351546-a8picocart-unocart-on-a-raspberry-pi-pico/). ​
 
 
-## xx/xx/202x
+## 11/xx/2026
 
 Coming soon....
+
+Error messages do not take you back to the first page. (@ascrnet)
 
 Repair Adawliah 32k Cartridge (@ascrnet)
 

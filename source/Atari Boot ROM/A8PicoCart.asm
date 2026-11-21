@@ -120,6 +120,7 @@ text_out_ptr	= $96	// word
 text_out_len	= $98
 cur_chunk	= $99
 joy2b		= $9a
+preserve_paging	= $9b
 
 ; XEX loader stuff from Jon Halliday/FJC
 LoaderAddress	equ $700
@@ -244,8 +245,27 @@ check_read_dir
 read_dir_ok
 	lda $D502
 	sta num_dir_entries
+	lda preserve_paging
+	bne skip_reset_paging
 	mva #0 top_item
 	mva #0 cur_item
+	jmp display_directory
+skip_reset_paging
+	mva #0 preserve_paging
+	lda cur_item
+	cmp num_dir_entries
+	bcc paging_ok_cur
+	lda num_dir_entries
+	beq paging_ok_cur
+	sec
+	sbc #1
+	sta cur_item
+paging_ok_cur
+	lda top_item
+	cmp cur_item
+	bcc display_directory
+	lda cur_item
+	sta top_item
 	
 ; display_directory
 display_directory
@@ -478,7 +498,13 @@ return_pressed_ok
 	beq atr_loaded
 	; if we get here, there was an error
 	jsr display_error_msg_from_cart
+	lda search_results_mode
+	bne redraw_search_after_error
+	mva #1 preserve_paging
 	jmp read_current_directory
+redraw_search_after_error
+	jmp display_directory
+
 directory_changed
 	jmp read_current_directory
 file_loaded
@@ -543,6 +569,7 @@ search
 	lda #CART_CMD_SEARCH
 	jsr wait_for_cart
 	mva #1 search_results_mode
+	mva #0 preserve_paging
 	jmp check_read_dir
     .endp ; proc start
 
@@ -1223,7 +1250,7 @@ Loop
 	.byte "/_/ \_\___/_| |_\__\_/\___\__,_|_|  \__)"
 	.endl
 	.local menu_text5
-	.byte "                Electrotrains 11/03/2026"
+	.byte "                Electrotrains 11/21/2026"
 	.endl
 	.local menu_text_bottom
 	.byte $DD,'/',$DC,'/Return=Sel ',$DE,'/Esc=Back B=Boot F=Find '
