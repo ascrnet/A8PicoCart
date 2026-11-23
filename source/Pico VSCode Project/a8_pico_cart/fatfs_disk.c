@@ -52,7 +52,7 @@ void create_fatfs_disk()
     f_mount(&fs, "", 0);
     f_setlabel("A8-PICOCART");
     res = f_open(&fil, "WELCOME.TXT", FA_CREATE_NEW | FA_WRITE);
-    f_puts("Atari 8-bit PicoCart\r\n(c)2023 Electrotrains\r\nDrag ROM,CAR & XEX files in here!\r\n", &fil);
+    f_puts("Atari 8-bit PicoCart\r\n(c)2026 Electrotrains\r\nDrag ROM, CAR, BAS & XEX files in here!\r\n", &fil);
     f_close(&fil);
     f_mount(0, "", 0);
 }
